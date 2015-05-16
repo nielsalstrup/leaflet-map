@@ -1,11 +1,11 @@
 <?php
     /*
-    Author: bozdoz
-    Author URI: http://twitter.com/bozdoz/
-    Plugin URI: http://wordpress.org/plugins/leaflet-map/
+    Author: nielsalstrup
+    Author URI: http://twitter.com/alstrupnext/
+    Plugin URI: 
     Plugin Name: Leaflet Map
-    Description: A plugin for creating a Leaflet JS map with a shortcode.
-    Version: 1.11
+    Description: A plugin for creating a Leaflet JS map featuring clustering, shortcodes, and geocoding. Based on bozdoz' leaflet-map.
+    Version: 1.00
     License: GPL2
     */
 
@@ -99,8 +99,16 @@ if (!class_exists('Leaflet_Map_Plugin')) {
             $js_url = sprintf($js_url, $version);
             $css_url = sprintf($css_url, $version);
 
+            $mc_default_css = plugins_url('scripts/MarkerCluster.Default.css', __FILE__ );
+            $mc_css = plugins_url('scripts/MarkerCluster.css', __FILE__ );
+            $mc_js = plugins_url( 'scripts/leaflet.markercluster-src.js', __FILE__ );
+
             wp_register_style('leaflet_stylesheet', $css_url, Array(), $version, false);
-            wp_register_script('leaflet_js', $js_url, Array(), $version, true);
+            wp_register_script('leaflet_js', $js_url, Array(), $version, false);
+
+            wp_register_style('leaflet_markercluster_default_stylesheet', $mc_default_css, Array(), '', false);
+            wp_register_style('leaflet_markercluster_stylesheet', $mc_css, Array(), '', false);
+            wp_register_script('leaflet_markercluster_js', $mc_js, Array('leaflet_js'), '', false);
             
             /* run an init function because other wordpress plugins don't play well with their window.onload functions */
             wp_register_script('leaflet_map_init', plugins_url('scripts/init-leaflet-map.js', __FILE__), Array('leaflet_js'), '1.0', true);
@@ -196,7 +204,10 @@ if (!class_exists('Leaflet_Map_Plugin')) {
 
             /* leaflet script */
             wp_enqueue_style('leaflet_stylesheet');
+            wp_enqueue_style('leaflet_markercluster_default_stylesheet');
+            wp_enqueue_style('leaflet_markercluster_stylesheet');
             wp_enqueue_script('leaflet_js');
+            wp_enqueue_script('leaflet_markercluster_js');
             wp_enqueue_script('leaflet_map_init');
 
             if ($atts) {
