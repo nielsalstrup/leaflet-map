@@ -3,7 +3,7 @@
     Author: nielsalstrup
     Author URI: http://twitter.com/alstrupnext/
     Plugin URI: 
-    Plugin Name: Leaflet Map
+    Plugin Name: Leaflet Map +
     Description: A plugin for creating a Leaflet JS map featuring clustering, shortcodes, and geocoding. Based on bozdoz' leaflet-map.
     Version: 1.00
     License: GPL2
