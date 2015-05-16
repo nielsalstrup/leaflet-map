@@ -54,7 +54,7 @@ if (!class_exists('Leaflet_Map_Plugin')) {
             add_shortcode('leaflet-marker', array(&$this, 'marker_shortcode'));
             add_shortcode('leaflet-line', array(&$this, 'line_shortcode'));
             add_shortcode('leaflet-image', array(&$this, 'image_shortcode'));
-            add_shortcode('leaflet-line', array(&$this, 'line_shortcode'));
+            add_shortcode('leaflet-route', array(&$this, 'route_shortcode'));
 
             add_action( 'wp_enqueue_scripts', array(&$this, 'enqueue_and_register') );
             add_action( 'admin_enqueue_scripts', array(&$this, 'enqueue_and_register') );
@@ -178,6 +178,38 @@ if (!class_exists('Leaflet_Map_Plugin')) {
             return (Object) array('lat' => 0, 'lng' => 0);
         }
 
+        /* Routing function with Yours Routing */
+
+        public function yours_routing ($from, $to, $tmode, $inst) {
+
+            /* get routing and directions using YOURS */
+            $yours_routing = 'http://www.yournavigation.org/api/1.0/gosmore.php?format=geojson&lang=da&';
+            $routing_url = $yours_routing;
+
+            if (!empty($from)) {
+                $routing_url .= 'flat='.$from[0].'&flon='.$from[1];
+            } else {
+                $routing_url .= '&flat=55.675283&flon=12.570163'; //from Rådhuspladsen, København                
+            }
+            if (!empty($to)) {
+                $routing_url .= '&tlat='.$to[0].'&tlon='.$to[1];  
+            } else {
+                $routing_url .= '&tlat=55.675283&tlon=12.570163'; //to Rådhuspladsen, København
+            }
+            $tmode = empty($tmode) ? 'motorcar' : $tmode;
+            $inst = empty($inst) ? '0' : $inst;
+            $routing_url .= '&v='.$tmode.'&instructions='.$inst;
+
+            $json = file_get_contents($routing_url);
+            $json = json_decode($json);
+
+            //print_r($json);
+
+            $route = $json->{'coordinates'};
+
+            return $route;
+        }
+
         /* count map shortcodes to allow for multiple */
         public static $leaflet_map_count;
 
@@ -261,9 +293,12 @@ if (!class_exists('Leaflet_Map_Plugin')) {
                 if ($show_attr) {
                     /* add attribution to MapQuest and OSM */
                     $content .= '
-                        map.attributionControl.addAttribution("Tiles Courtesy of <a href=\"http://www.mapquest.com/\" target=\"_blank\">MapQuest</a> <img src=\"http://developer.mapquest.com/content/osm/mq_logo.png\" />");
+                        map.attributionControl.addAttribution("Tiles: <a href=\"http://www.mapquest.com/\" target=\"_blank\">MapQuest</a> <img src=\"http://developer.mapquest.com/content/osm/mq_logo.png\" />");
 
-                        map.attributionControl.addAttribution("© <a href=\"http://www.openstreetmap.org/\">OpenStreetMap</a> contributors");';
+                        map.attributionControl.addAttribution("© <a href=\"http://www.openstreetmap.org/\">OpenStreetMap</a>");
+
+                        map.attributionControl.addAttribution("Markers: <a href=\"https:/mapicons.mapsmarker.com/\">Map Icons</a>");';
+
                 }
 
                 $content .= '
@@ -512,6 +547,127 @@ if (!class_exists('Leaflet_Map_Plugin')) {
                 WPLeafletMapPlugin.lines.push( line );
 
             });
+            </script>";
+
+            return $marker_script;
+        }
+
+        public function route_shortcode ( $atts ) {
+
+            /* add to previous map */
+            if (!$this::$leaflet_map_count) {
+                return '';
+            }
+
+            $leaflet_map_count = $this::$leaflet_map_count;
+            
+            $defaults = array_merge($this::$defaults['text'], $this::$defaults['checks']);
+
+            /* defaults from db */
+            $default_geocoding_method = get_option('leaflet_geocoding_method', $defaults['leaflet_geocoding_method']);
+
+            if (!empty($atts)) extract($atts);
+
+            $color = empty($color) ? "black" : $color;
+            $fitline = empty($fitline) ? 0 : $fitline;
+
+            $draggable = empty($draggable) ? 'false' : $draggable;
+            $visible = empty($visible) ? false : ($visible == 'true');
+            $transporttype = empty($transporttype) ? 'motorcar' : $transporttype;
+            $instructions = empty($instructions) ? '0' : $instructions;
+
+            $locations = Array();
+
+            $iconA = plugins_url( 'images/a_dd0000.png', __FILE__ );
+            $iconB = plugins_url( 'images/b_00dd00.png', __FILE__ );
+
+            if (!empty($addresses)) {
+                $addresses = preg_split('/\s?[;|\/]\s?/', $addresses);
+                foreach ($addresses as $address) {
+                    if (trim($address)) {
+                        $geocoded = $this::google_geocode($address);
+                        $locations[] = Array($geocoded->{'lat'}, $geocoded->{'lng'});
+                    }
+                }
+            } else if (!empty($latlngs)) {
+                $latlngs = preg_split('/\s?[;|\/]\s?/', $latlngs);
+                foreach ($latlngs as $latlng) {
+                    if (trim($latlng)) {
+                        $locations[] = array_map('floatval', preg_split('/\s?,\s?/', $latlng));
+                    }
+                }
+            } else if (!empty($coordinates)) {
+                $coordinates = preg_split('/\s?[;|\/]\s?/', $coordinates);
+                foreach ($coordinates as $xy) {
+                    if (trim($xy)) {
+                        $locations[] = array_map('floatval', preg_split('/\s?,\s?/', $xy));
+                    }
+                }
+            }
+
+            $route = $this::yours_routing( $locations[0], $locations[1], $transporttype, $instructions );
+ 
+            $marker_script = "<script>
+                WPLeafletMapPlugin.add(function () {
+                    var route,
+                        iconA, iconB,
+                        markerA, markerB,
+                        map_count = {$leaflet_map_count},
+                        draggable = {$draggable},
+                        previous_map = WPLeafletMapPlugin.maps[ map_count - 1 ],
+                        is_image = previous_map.is_image_map,
+                        image_len = WPLeafletMapPlugin.images.length,
+                        previous_image = WPLeafletMapPlugin.images[ image_len - 1 ],
+                        previous_image_onload;
+            ";
+
+            $marker_script .= "
+                        iconA = L.icon({iconUrl: '{$iconA}', iconSize: [32, 37], iconAnchor: [16, 36]});
+                        iconB = L.icon({iconUrl: '{$iconB}', iconSize: [32, 37], iconAnchor: [16, 36]});
+                        markerA = L.marker(new L.LatLng({$locations[0][0]}, {$locations[0][1]}), {icon: iconA});
+                        markerB = L.marker(new L.LatLng({$locations[1][0]}, {$locations[1][1]}), {icon: iconB});
+            ";
+
+            $marker_script .="
+                routePoints = [
+            ";
+
+            foreach ($route as $waypoint) {
+                $marker_script .= "new L.LatLng({$waypoint[1]}, {$waypoint[0]})";
+                if ($waypoint!==end($route))
+                    $marker_script .= ",";
+                $marker_script .="
+                ";
+            }
+
+            $marker_script .="];
+            ";
+
+            $marker_script .="
+                routeOptions = {
+                    color: 'blue',
+                    weight: 4,
+                    opacity: 0.5
+                };
+            ";
+
+            $marker_script .="
+                route = L.polyline( routePoints, routeOptions );
+            ";
+
+
+            $marker_script .="
+
+                markerA.addTo( previous_map );
+                markerB.addTo( previous_map );
+                
+                previous_map.addLayer( route );
+                previous_map.fitBounds( route.getBounds() );
+            ";
+
+            $marker_script .= "
+                WPLeafletMapPlugin.routes.push( route );
+            }); // end add function
             </script>";
 
             return $marker_script;

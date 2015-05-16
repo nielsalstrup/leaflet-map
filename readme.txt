@@ -1,10 +1,10 @@
 === Plugin Name ===
-Author: bozdoz
-Author URI: http://www.twitter.com/bozdoz/
-Plugin URI: http://wordpress.org/plugins/leaflet-map/
-Contributors: bozdoz, Remigr
-Donate link: https://www.gittip.com/bozdoz/
-Tags: leaflet, map, javascript, mapquest
+Author: alstrupnext (after bozdoz)
+Author URI: http://www.twitter.com/alstrupnext/
+Plugin URI: 
+Contributors: bozdoz, Remigr, alstrupnext
+Donate link: 
+Tags: leaflet, map, javascript, mapquest, yourrouting
 Requires at least: 3.0.1
 Tested up to: 4.2
 Version: 1.11

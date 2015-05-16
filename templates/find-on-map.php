@@ -48,6 +48,10 @@
 					'[leaflet-map]',
 					'[leaflet-line color="purple" addresses="Sayulita; Puerto Vallarta;" fitline=1]'
 					),
+				"Route between Addresses" => array(
+					'[leaflet-map]',
+					'[leaflet-route color="blue" addresses="Roskilde; Odense;" transportype=1]'
+					),
 				);
 
 			foreach ($examples as $title => $collection) {
