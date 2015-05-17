@@ -2,7 +2,7 @@
 Author: alstrupnext (after bozdoz)
 Author URI: http://www.twitter.com/alstrupnext/
 Plugin URI: 
-Contributors: bozdoz, Remigr, alstrupnext
+Contributors: bozdoz, Remigr, nielsalstrup
 Donate link: 
 Tags: leaflet, map, javascript, mapquest, yourrouting
 Requires at least: 3.0.1

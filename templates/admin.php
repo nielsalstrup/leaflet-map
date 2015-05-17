@@ -64,7 +64,7 @@ if (isset($_POST['submit'])) {
 			?>
 				<input class="checkbox" name="<?php echo $k; ?>" type="checkbox" id="<?php echo $k; ?>"<?php if (get_option($k, $v)) echo ' checked="checked"' ?> />
 			<?php
-			}
+			} 
 			?>
 			</span>
 		</label>
