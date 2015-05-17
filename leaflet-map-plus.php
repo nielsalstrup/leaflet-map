@@ -336,9 +336,9 @@ if (!class_exists('Leaflet_Map_Plugin')) {
                 if ($show_attr) {
                     /* add attribution to MapQuest and OSM */
                     $content .= '
-                        map.attributionControl.addAttribution("Tiles: <a href=\"http://www.mapquest.com/\" target=\"_blank\">MapQuest</a> <img src=\"http://developer.mapquest.com/content/osm/mq_logo.png\" />");
-
                         map.attributionControl.addAttribution("© <a href=\"http://www.openstreetmap.org/\">OpenStreetMap</a>");
+
+                        map.attributionControl.addAttribution("Tiles: <a href=\"http://www.mapquest.com/\" target=\"_blank\">MapQuest</a> <img src=\"http://developer.mapquest.com/content/osm/mq_logo.png\" />");
 
                         map.attributionControl.addAttribution("Markers: <a href=\"https:/mapicons.mapsmarker.com/\">Map Icons</a>");';
 
@@ -628,7 +628,7 @@ if (!class_exists('Leaflet_Map_Plugin')) {
                 $addresses = preg_split('/\s?[;|\/]\s?/', $addresses);
                 foreach ($addresses as $address) {
                     if (trim($address)) {
-                        $geocoded = $this::google_geocode($address);
+                        $geocoded = $this::dawa_geocode($address);
                         $locations[] = Array($geocoded->{'lat'}, $geocoded->{'lng'});
                     }
                 }
@@ -715,6 +715,8 @@ if (!class_exists('Leaflet_Map_Plugin')) {
 
             return $marker_script;
         }
+
+        include_once('leaflet-map-query.php');
 
     } /* end class */
 
