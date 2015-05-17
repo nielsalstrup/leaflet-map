@@ -31,9 +31,6 @@ if (!class_exists('Leaflet_Map_Plugin')) {
             'serialized' => array(
                 'leaflet_geocoded_locations' => array()
                 )
-            'select' =>
-                'leaflet_geocode_method' => array()
-                )
             );
 
         public static $helptext = array(
@@ -53,6 +50,8 @@ if (!class_exists('Leaflet_Map_Plugin')) {
         public function __construct() {
             add_action('admin_init', array(&$this, 'admin_init'));
             add_action('admin_menu', array(&$this, 'admin_menu'));
+
+            add_action('show_map', array(&$this, 'map_query'));
 
             add_shortcode('leaflet-map', array(&$this, 'map_shortcode'));
             add_shortcode('leaflet-marker', array(&$this, 'marker_shortcode'));
@@ -107,12 +106,16 @@ if (!class_exists('Leaflet_Map_Plugin')) {
             $mc_css = plugins_url('scripts/MarkerCluster.css', __FILE__ );
             $mc_js = plugins_url( 'scripts/leaflet.markercluster-src.js', __FILE__ );
 
-            wp_register_style('leaflet_stylesheet', $css_url, Array(), $version, false);
-            wp_register_script('leaflet_js', $js_url, Array(), $version, false);
+            wp_enqueue_style('leaflet_stylesheet', $css_url, Array(), $version, false);
 
-            wp_register_style('leaflet_markercluster_default_stylesheet', $mc_default_css, Array(), '', false);
-            wp_register_style('leaflet_markercluster_stylesheet', $mc_css, Array(), '', false);
+            wp_register_script('leaflet_js', $js_url, Array(), $version, false);
+            wp_enqueue_script('leaflet_js');
+
+            wp_enqueue_style('leaflet_markercluster_default_stylesheet', $mc_default_css, Array(), '', false);
+            wp_enqueue_style('leaflet_markercluster_stylesheet', $mc_css, Array(), '', false);
+
             wp_register_script('leaflet_markercluster_js', $mc_js, Array('leaflet_js'), '', false);
+            wp_enqueue_script('leaflet_markercluster_js');
             
             /* run an init function because other wordpress plugins don't play well with their window.onload functions */
             wp_register_script('leaflet_map_init', plugins_url('scripts/init-leaflet-map.js', __FILE__), Array('leaflet_js'), '1.0', true);
@@ -127,7 +130,7 @@ if (!class_exists('Leaflet_Map_Plugin')) {
         }
 
         public function admin_menu () {
-            add_menu_page("Leaflet Map", "Leaflet Map", 'manage_options', "leaflet-map", array(&$this, "settings_page"), plugins_url('images/leaf.png', __FILE__), 100);
+            add_menu_page("Leaflet Map+", "Leaflet Map+", 'manage_options', "leaflet-map", array(&$this, "settings_page"), plugins_url('images/leaf.png', __FILE__), 100);
             add_submenu_page("leaflet-map", "Default Values", "Default Values", 'manage_options', "leaflet-map", array(&$this, "settings_page"));
             add_submenu_page("leaflet-map", "Shortcodes", "Shortcodes", 'manage_options', "leaflet-get-shortcode", array(&$this, "shortcode_page"));
         }
@@ -144,6 +147,11 @@ if (!class_exists('Leaflet_Map_Plugin')) {
             wp_enqueue_script('custom_plugin_js', plugins_url('scripts/get-shortcode.js', __FILE__), Array('leaflet_js'), false);
 
             include 'templates/find-on-map.php';
+        }
+
+        public function map_query () {
+
+            include 'leaflet-map-query.php';
         }
 
         public function google_geocode ( $address ) {
@@ -281,8 +289,6 @@ if (!class_exists('Leaflet_Map_Plugin')) {
             wp_enqueue_style('leaflet_stylesheet');
             wp_enqueue_style('leaflet_markercluster_default_stylesheet');
             wp_enqueue_style('leaflet_markercluster_stylesheet');
-            wp_enqueue_script('leaflet_js');
-            wp_enqueue_script('leaflet_markercluster_js');
             wp_enqueue_script('leaflet_map_init');
 
             if ($atts) {
@@ -607,7 +613,6 @@ if (!class_exists('Leaflet_Map_Plugin')) {
             $defaults = array_merge($this::$defaults['text'], $this::$defaults['checks']);
 
             /* defaults from db */
-            $default_geocoding_method = get_option('leaflet_geocoding_method', $defaults['leaflet_geocoding_method']);
 
             if (!empty($atts)) extract($atts);
 
@@ -715,8 +720,6 @@ if (!class_exists('Leaflet_Map_Plugin')) {
 
             return $marker_script;
         }
-
-        include_once('leaflet-map-query.php');
 
     } /* end class */
 
