@@ -40,7 +40,7 @@
                     $addresses = preg_split('/\s?[;|\/]\s?/', $addresses);
                     foreach ($addresses as $address) {
                         if (trim($address)) {
-                            $geocoded = $this::dawa_geocode($address);
+                            $geocoded = $this::osm_geocode($address);
                             $locations[] = Array($geocoded->{'lat'}, $geocoded->{'lng'});
                         }
                     }
@@ -64,7 +64,7 @@
             }
         } else {
             $place_flag = true;
-            $locations[0] = $this::dawa_geocode($the_place->address);
+            $locations[0] = $this::osm_geocode($the_place->address);
             $prad = $the_place->rad;
             $plat = $locations[0][0];
             $plng = $locations[0][1];                        
