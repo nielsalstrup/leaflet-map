@@ -38,7 +38,7 @@ if (!class_exists('Leaflet_Map_Plugin')) {
 
         public static $choices = array(
             'leaflet_geocoding' => array(
-                'dawa' => 'Danmarks Adresser Web Applikation (DAWA)',
+                'dawa' => 'Danmarks Adressers Web API (DAWA)',
                 'google' => 'Google Maps',
                 'osm' => 'OpenStreetMap Nominatim',
                 ),
